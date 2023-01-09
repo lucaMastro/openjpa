@@ -44,6 +44,10 @@
         <jacoco.report.dir>${coverage.report.dir}/jacoco-reports</jacoco.report.dir>
         <pit.report.dir>${coverage.report.dir}/pit-reports</pit.report.dir>
 
+        <!-- Sonar -->
+        <sonar.organization>lucamastro</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+
         <java.class.version>1.8</java.class.version>
         <java.testclass.version>1.8</java.testclass.version>
 
