@@ -209,13 +209,9 @@
                         <configuration>
                             <targetClasses>
                                 <param>org.apache.openjpa.util.CacheMap</param>
-                                <param>org.apache.openjpa.util.ProxyManagerImpl</param>
                             </targetClasses>
                             <targetTests>
-                                <param>org.apache.openjpa.util.CacheMapPinTest</param>
                                 <param>org.apache.openjpa.util.CacheMapPutTest</param>
-                                <param>org.apache.openjpa.util.ProxyManagerImplCopyArrayTest</param>
-                                <param>org.apache.openjpa.util.ProxyManagerImplCopyCustomTest</param>
                             </targetTests>
                             <avoidCallsTo>
                                 <avoidCallsTo>java.util.logging</avoidCallsTo>

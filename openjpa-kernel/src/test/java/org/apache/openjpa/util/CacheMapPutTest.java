@@ -27,6 +27,8 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -39,42 +41,49 @@ public class CacheMapPutTest {
     private Object value;
     private boolean alreadyExists;
     private int mapSize;
-    private int numElementsAlreadyPresent;
+    private boolean isCacheFull;
+    private boolean isKeyPinned;
     private final String alreadyPresentValue = "it's not possible to test everything";
-    private boolean expected;
+
+    private Object leastRecentlyUsedKey = null;
+    private Object leastRecentlyUsedValue = null;
 
 
-
-    public CacheMapPutTest(Object key,Object value, boolean alreadyExists, int mapSize, int numEl, boolean expected) {
-        configure(key, value, alreadyExists, mapSize, numEl, expected);
+    public CacheMapPutTest(Object key,Object value, boolean alreadyExists, int mapSize,
+                           boolean isFull, boolean isPinned) {
+        configure(key, value, alreadyExists, mapSize, isFull, isPinned);
     }
 
-    public void configure(Object key, Object value, boolean alreadyExist, int mapSize, int numEl, boolean expected){
+    public void configure(Object key, Object value, boolean alreadyExist, int mapSize,
+                          boolean isFull, boolean isPinned){
         this.key = key;
         this.value = value;
         this.alreadyExists = alreadyExist;
         this.mapSize = mapSize;
-        this.numElementsAlreadyPresent = numEl;
-        this.expected = expected;
-
+        this.isCacheFull = isFull;
+        this.isKeyPinned = isPinned;
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> getTestParameters() {
         return Arrays.asList(new Object[][]{
-                // key, value, alreadyExists, mapSize, numEl, expected output
-                {null, new Object(), false, -1, 1, false},
-                {new Object(), null, false, 1, 1, false},
-                {new Object(), new Object(), false, 1, 2, false},
-                {new Object(), new Object(), false, 1, 1, true},
-                {new Object(), new Object(), true, 1, 1, false},
+                // key, value, alreadyExists, mapSize, isCacheFull, isKeyPinned
+                {null, new Object(), false, -1, false, false},
+                {new Object(), null, false, 0, false, false },
+                {new Object(), new Object(), true, 1, false, false},
+                {new Object(), new Object(), false, 1, true, false},
+                {new Object(), new Object(), false, 1, false, true},
+                /* added to increase coverage: */
+                {new Object(), new Object(), true, 1, false, true},
+                {new Object(), new Object(), true, 1, true, false},
         });
     }
 
 
     @Before
     public void setUp(){
-        this.cacheMap = new CacheMap(true, this.mapSize, this.mapSize, .75F, 16);
+        // this.cacheMap = new CacheMap(true, this.mapSize, this.mapSize, .75F, 16);
+        this.cacheMap = new CacheMap(true, this.mapSize, this.mapSize + 2, .75F, 16);
 
         // counting the added elements
         int count = 0;
@@ -82,17 +91,40 @@ public class CacheMapPutTest {
            returned value is the same. */
         if (this.alreadyExists) {
             this.cacheMap.put(this.key, this.alreadyPresentValue);
-            this.value = "it's not possible to test everything";
+            this.leastRecentlyUsedKey = this.key;
             count++;
         }
-        // adding elements to fill size
-        for (; count < this.numElementsAlreadyPresent; count++) {
-            this.cacheMap.put(count, count);
+
+        /* adding elements if cache should be full */
+        if (this.isCacheFull){
+            for (; count < this.mapSize + 2; count++) {
+                this.cacheMap.put(count, count);
+                /* this is to take trace of the least recently used value */
+                if (leastRecentlyUsedKey == null)
+                    leastRecentlyUsedKey = count;
+            }
+        }
+
+        if (this.isKeyPinned){
+            this.cacheMap.pin(this.key);
         }
     }
 
     @Test
     public void putTest() {
+
+        if (this.isCacheFull && !this.isKeyPinned){
+            /* checking if the least recently used value is not in cache, but it's still present in the
+               softMap */
+            if (alreadyExists) {
+                Assert.assertFalse(this.cacheMap.cacheMap.containsKey(this.leastRecentlyUsedKey));
+                Assert.assertTrue(this.cacheMap.softMap.containsKey(this.leastRecentlyUsedKey));
+            }
+            else{
+                Assert.assertFalse(this.cacheMap.cacheMap.containsKey(this.leastRecentlyUsedKey));
+                Assert.assertTrue(this.cacheMap.softMap.containsKey(this.leastRecentlyUsedKey));
+            }
+        }
 
         Object oldValue = this.cacheMap.put(this.key, this.value);
 
@@ -106,7 +138,6 @@ public class CacheMapPutTest {
         // check if i can read the same value
         Object redValue = this.cacheMap.get(this.key);
         Assert.assertEquals(this.value, redValue);
-
     }
 
 }
