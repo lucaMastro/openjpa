@@ -28,9 +28,6 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 @RunWith(Parameterized.class)
 public class CacheMapPutTest {
@@ -46,7 +43,6 @@ public class CacheMapPutTest {
     private final String alreadyPresentValue = "it's not possible to test everything";
 
     private Object leastRecentlyUsedKey = null;
-    private Object leastRecentlyUsedValue = null;
 
 
     public CacheMapPutTest(Object key,Object value, boolean alreadyExists, int mapSize,

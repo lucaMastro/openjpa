@@ -212,6 +212,7 @@
                             </targetClasses>
                             <targetTests>
                                 <param>org.apache.openjpa.util.CacheMapPutTest</param>
+                                <param>org.apache.openjpa.util.CacheMapRemoveTest</param>
                             </targetTests>
                             <avoidCallsTo>
                                 <avoidCallsTo>java.util.logging</avoidCallsTo>
